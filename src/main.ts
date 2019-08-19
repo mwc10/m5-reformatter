@@ -1,0 +1,1 @@
+document.body.textContent = "Working TS code compilation + recompilation + verbose"
