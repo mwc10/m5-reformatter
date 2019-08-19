@@ -14,5 +14,6 @@
     "tsify": "^4.0.1",
     "typescript": "^3.5.3",
     "watchify": "^3.11.1"
-  }
+  },
+  "dependencies": {}
 }
