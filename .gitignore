@@ -1,2 +1,5 @@
 # NPM/node
 node_modules/
+
+# generated file
+dist/*.js
