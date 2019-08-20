@@ -1,4 +1,5 @@
-const DATA_ROW_ID_BASE = "StatusRow"
+import {State} from './state'
+
 const FILE_TABLE_ID = "fileTable"
 const FILE_TABLE_DIV = "fileList"
 const LOG_ID = "log"
@@ -15,15 +16,15 @@ export class FileTable {
     // map between a file name and its table ROW
     private fileMap: Map<string, HTMLTableRowElement>
 
-    constructor(files: File[]) {
+    constructor(files: File[], s: State) {
         html_clear(this.container)
-        const [table, map] = FileTable.make_file_table(files)
+        const [table, map] = FileTable.make_file_table(files, s)
         this.container.appendChild(table)
         this.elem = table
         this.fileMap = map
     }
 
-    private static make_file_table(files: File[]): [HTMLTableElement, Map<string, HTMLTableRowElement>] {
+    private static make_file_table(files: File[], state: State): [HTMLTableElement, Map<string, HTMLTableRowElement>] {
         const map = new Map()
         const table = document.createElement("table")
         table.id = FILE_TABLE_ID
@@ -34,8 +35,15 @@ export class FileTable {
 
         for (const file of files) {
             const row = document.createElement('tr')
-            row.id = file.name + DATA_ROW_ID_BASE
-            row.innerHTML = `<td>${file.name}</td> <td> Uploading... </td> <td></td>`
+            row.innerHTML = `<td>${file.name}</td> <td> Loading </td>`
+
+            const dayCell = document.createElement('td')
+            const dayPicker = document.createElement('input')
+            dayPicker.type = "number"
+            dayPicker.addEventListener("change", e => state.cb.update_day(e, file.name))
+
+            dayCell.appendChild(dayPicker)
+            row.appendChild(dayCell)
             table.appendChild(row)
             map.set(file.name, row)
         }
@@ -105,8 +113,23 @@ export class Parameters {
         const header = document.createElement('h2')
         header.textContent = "Enter Assay Parameters"
 
-        this.elem.appendChild(header)
+        const help = document.createElement('p')
+        help.textContent = "Add an assay read date to each file above." + 
+        " Then, set the Target, Method, and Units in the forms below." + 
+        " Once all settings are entered, you will be able to download a CSV for upload into the MPS."
+
+        const assayForm = Parameters.make_assays_form()
+
         this.elem.classList.add(HIDDEN_CLASS)
+        this.elem.appendChild(header)
+        this.elem.appendChild(help)
+        this.elem.appendChild(assayForm)
+    }
+
+    private static make_assays_form(): HTMLFormElement {
+        const form = document.createElement('form')
+
+        return form
     }
 
     show() {

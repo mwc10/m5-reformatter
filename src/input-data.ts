@@ -1,6 +1,6 @@
-import {Result, Err, Ok} from './result'
+import {Result, Err, Ok} from './fp'
 import {FileTable, Log} from './dom'
-import {State} from './main'
+import {State} from './state'
 
 /** Summarized data from an M5 text data file */
 export interface M5Data {
@@ -10,8 +10,10 @@ export interface M5Data {
 }
 
 class ParseErr {
-    constructor(readonly filename: string, readonly mesg: string){
-    }
+    constructor(
+        readonly filename: string, 
+        readonly mesg: string
+    ){ }
 }
 
 type ParseResult<T> = Result<T, ParseErr>
@@ -24,19 +26,16 @@ export function filepickerCB(e: Event, state: State) {
     e.preventDefault()
     state.hide_parameters()
 
-    const filelist: FileList = (e.target as any).files
+    console.log(Err)
+
+    const filelist: FileList = (e.target as HTMLInputElement).files
     const files: File[] = Array.prototype.slice.call(filelist)
     const logger = state.dom.log
     logger.clear()
 
     // make a list of each file to be uploaded and processed
-    const table = new FileTable(files)
-    const promisedFiles = files
-        .map(f => 
-            read_m5_datafile(f)
-            .catch(e => Err<M5Data, ParseErr>(new ParseErr(f.name, e)))
-        )
-    const update = (res: ParseResult<M5Data>[]) => {
+    const table = new FileTable(files, state)
+    const update_status = (res: ParseResult<M5Data>[]) => {
         const [oks, errs] = partition_results(res)
         return update_file_status(oks, errs, logger, table)
     }
@@ -49,11 +48,15 @@ export function filepickerCB(e: Event, state: State) {
             throw Error("No valid M5 data files. Pick new files")
         }
     }
+    const promisedFiles = files
+        .map(f => 
+            read_m5_datafile(f)
+            .catch(e => Err<M5Data, ParseErr>(new ParseErr(f.name, e)))
+        )
 
     state.set_table(table)
-
     Promise.all(promisedFiles)
-        .then(update)
+        .then(update_status)
         .then(([oks, _]) => oks)
         .then(update_state_finish)
         .catch(e => logger.err(e))
