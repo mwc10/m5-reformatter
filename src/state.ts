@@ -2,16 +2,32 @@ import {M5Data} from './input-data'
 import {Log, FileTable, Parameters} from './dom'
 import {Option, Some, None, Result} from './fp'
 
+export const DOMIds = {
+    FILE_TABLE_ID: "fileTable",
+    FILE_TABLE_DIV: "fileList",
+    LOG_ID: "log",
+    PARAMETERS_ID: "parameters",
+    SETTINGS_FORM_ID: "settingsForm",
+    ERR_CLASS: "error",
+    SUCCESS_CLASS: "success",
+    HIDDEN_CLASS: "hidden",
+    SETTINGS: {
+        TARGET: 'target',
+        METHOD: 'method',
+        UNIT: 'unit',
+    }
+}
+
 interface DOMState {
-    fileTable?: FileTable | undefined,
+    fileTable?: FileTable,
     log: Log,
-    parameters: Parameters,
+    parameters?: Parameters,
 }
 
 interface Settings {
-    target: string | null,
-    method: string | null,
-    unit: string | null,
+    target: Option<string>,
+    method: Option<string>,
+    unit: Option<string>,
 }
 
 interface Data {
@@ -21,6 +37,18 @@ interface Data {
         wells: Map<string, number>
     }
 }
+
+function get_form_input(form: HTMLFormElement, name: string): HTMLInputElement {
+    return form.elements.namedItem(name) as HTMLInputElement
+}
+
+function ignore_empty_str(s: string): Option<string> {
+    return s === "" || s === null || s === undefined ? 
+        None() : 
+        Some(s)
+}
+
+const get_val = (f: HTMLFormElement, v: string) => ignore_empty_str(get_form_input(f, v).value)
 
 export class State {
     //files: Map<string, M5Data>
@@ -46,6 +74,16 @@ export class State {
             }
             console.log(this)
             // call a "check to show download button" callback?
+        },
+        update_settings: (e: Event) => {
+            e.preventDefault()
+            
+            const form = e.currentTarget as HTMLFormElement
+            this.settings.target = get_val(form, DOMIds.SETTINGS.TARGET)
+            this.settings.method = get_val(form, DOMIds.SETTINGS.METHOD)
+            this.settings.unit = get_val(form, DOMIds.SETTINGS.UNIT)
+
+            console.log(this)
         }
     }
 
@@ -53,9 +91,9 @@ export class State {
         this.data = new Map()
         this.dom = dom
         this.settings = {
-            target: null,
-            method: null,
-            unit: null,
+            target: None(),
+            method: None(),
+            unit: None(),
         }
     }
 
@@ -67,6 +105,9 @@ export class State {
     }
     show_parameters() {
         this.dom.parameters.show()
+    }
+    update_parameters(params: Parameters) {
+        this.dom.parameters = params
     }
     update_files(arr: M5Data[]) {
         this.data.clear()

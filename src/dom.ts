@@ -1,17 +1,9 @@
-import {State} from './state'
-
-const FILE_TABLE_ID = "fileTable"
-const FILE_TABLE_DIV = "fileList"
-const LOG_ID = "log"
-const PARAMETERS_ID = "parameters"
-const ERR_CLASS = "error"
-const SUCCESS_CLASS = "success"
-const HIDDEN_CLASS = "hidden"
+import {State, DOMIds as D} from './state'
 
 export const html_clear = (e: HTMLElement) => e.innerHTML = ""
 
 export class FileTable {
-    private readonly container = document.getElementById(FILE_TABLE_DIV);
+    private readonly container = document.getElementById(D.FILE_TABLE_DIV);
     private elem: HTMLTableElement;
     // map between a file name and its table ROW
     private fileMap: Map<string, HTMLTableRowElement>
@@ -27,7 +19,7 @@ export class FileTable {
     private static make_file_table(files: File[], state: State): [HTMLTableElement, Map<string, HTMLTableRowElement>] {
         const map = new Map()
         const table = document.createElement("table")
-        table.id = FILE_TABLE_ID
+        table.id = D.FILE_TABLE_ID
 
         const header = document.createElement('tr')
         header.innerHTML = "<th> File </th> <th> Status </th> <th> Day </th>"
@@ -58,11 +50,12 @@ export class FileTable {
         switch (status) {
             case FileStatus.Error:
                 statusCell.textContent = "Error!"
-                statusCell.classList.add(ERR_CLASS)
+                statusCell.classList.add(D.ERR_CLASS)
+                row.querySelector("td:nth-child(3)").classList.add(D.HIDDEN_CLASS)
                 break;
             case FileStatus.Success:
                 statusCell.textContent = "Ready"
-                statusCell.classList.add(SUCCESS_CLASS)
+                statusCell.classList.add(D.SUCCESS_CLASS)
                 break;
             case FileStatus.Loading:
                 statusCell.textContent = "Loading"
@@ -86,7 +79,7 @@ enum FileStatus {
 }
 
 export class Log {
-    private readonly elem = document.getElementById(LOG_ID);
+    private readonly elem = document.getElementById(D.LOG_ID);
 
     constructor() {
         html_clear(this.elem)
@@ -98,7 +91,7 @@ export class Log {
 
     err(mesg: string) {
         const err = document.createElement("p")
-        err.classList.add(ERR_CLASS)
+        err.classList.add(D.ERR_CLASS)
         err.textContent = mesg
 
         this.elem.appendChild(err)
@@ -106,9 +99,9 @@ export class Log {
 }
 
 export class Parameters {
-    private readonly elem = document.getElementById(PARAMETERS_ID)
+    private readonly elem = document.getElementById(D.PARAMETERS_ID)
 
-    constructor() {
+    constructor(state: State) {
         html_clear(this.elem)
         const header = document.createElement('h2')
         header.textContent = "Enter Assay Parameters"
@@ -118,25 +111,52 @@ export class Parameters {
         " Then, set the Target, Method, and Units in the forms below." + 
         " Once all settings are entered, you will be able to download a CSV for upload into the MPS."
 
-        const assayForm = Parameters.make_assays_form()
+        const assayForm = Parameters.make_assays_form(state)
 
-        this.elem.classList.add(HIDDEN_CLASS)
+        this.elem.classList.add(D.HIDDEN_CLASS)
         this.elem.appendChild(header)
         this.elem.appendChild(help)
         this.elem.appendChild(assayForm)
     }
 
-    private static make_assays_form(): HTMLFormElement {
+    private static make_assays_form(state: State): HTMLFormElement {
         const form = document.createElement('form')
+        form.id = D.SETTINGS_FORM_ID
+        form.addEventListener('submit', state.cb.update_settings)
+        form.addEventListener('change', state.cb.update_settings)
+
+        const settings = [
+            [D.SETTINGS.TARGET, 'Target/Analyte:'],
+            [D.SETTINGS.METHOD, 'Method/Kit:'],
+            [D.SETTINGS.UNIT, 'Unit of Data:'],
+        ]
+
+        for (const [t, l] of settings) {
+            const [label, input] = make_input(t, l)
+            form.appendChild(label)
+            form.appendChild(input)
+        }
 
         return form
     }
 
     show() {
-        this.elem.classList.remove(HIDDEN_CLASS)
+        this.elem.classList.remove(D.HIDDEN_CLASS)
     }
 
     hide() {
-        this.elem.classList.add(HIDDEN_CLASS)
+        this.elem.classList.add(D.HIDDEN_CLASS)
     }
+}
+
+const make_input = (n: string, l: string) => {
+    const label = document.createElement('label')
+    label.htmlFor = n
+    label.textContent = l
+    const input = document.createElement('input')
+    input.type = "text"
+    input.name = n
+    input.id = n
+
+    return [label, input]
 }

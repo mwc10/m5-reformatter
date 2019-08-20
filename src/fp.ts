@@ -49,6 +49,14 @@ export class Result<T, E>{
                 return Result.Ok(this.value as T)
         }
     }
+    and_then<S, F>(fn: (v: T) => Result<S, F>): Result<S, E | F> {
+        switch (this.kind) {
+            case ResultState.Ok:
+                return fn(this.value as T)
+            case ResultState.Err:
+                return Result.Err(this.value as E)
+        }
+    }
     to_promise(): Promise<T> {
         switch (this.kind) {
             case ResultState.Ok:

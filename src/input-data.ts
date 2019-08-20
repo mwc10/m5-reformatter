@@ -26,8 +26,6 @@ export function filepickerCB(e: Event, state: State) {
     e.preventDefault()
     state.hide_parameters()
 
-    console.log(Err)
-
     const filelist: FileList = (e.target as HTMLInputElement).files
     const files: File[] = Array.prototype.slice.call(filelist)
     const logger = state.dom.log
@@ -87,17 +85,20 @@ function update_file_status(oks: M5Data[], errs: ParseErr[], log:Log, table: Fil
 function read_m5_datafile(f: File): ParsePromise<M5Data> {
     const format_data = ([t, d]: [number, Map<string, number>]) =>
         ({filename: f.name, temperature: t, data: d})
-    const fileExt = f.name.match(EXT_REG).pop()
-
-    if (fileExt !== ".txt") {
-        return Promise.resolve(
-            Err(new ParseErr(
-                f.name, 
-                `Expected a .txt text file, but received file "${f.name}" with extension "${fileExt}"`
-                )
-            )
+    
+    const res: Result<any, ParseErr> = Result.attempt(() => f.name.match(EXT_REG).pop())
+        .map_err(e => new ParseErr(f.name, `${e}`))
+        .and_then(ext => ext !== ".txt" ? 
+            Err(new ParseErr(f.name, 
+                `Expected a .txt text file, but received file "${f.name}" with extension "${ext}"`
+            )) :
+            Ok(ext)
         )
+
+    if (res.is_err()) {
+        return Promise.resolve(res)
     }
+
 
     let promise = new Promise((resolve, reject) => {
         let rdr = new FileReader()
