@@ -2,14 +2,18 @@
 <html>
     <head>
         <meta charset="utf-8">
+        <link rel="stylesheet" href="styles.css">
         <title> M5 Plate Data Reformatter </title>
     </head>
     <body> 
         <h1>M5 Plate Data to MIFC-A Reformatter</h1>
+        <h2>Upload Data</h2>
         <form id="uploader">
             <input type="file" multiple>
         </form>
+        <div id="log"></div>
         <div id="fileList"></div>
+        <div id="parameters" class="hidden"></div>
         <script src="bundle.js"></script>
     </body>
 </html>

@@ -4,11 +4,11 @@ enum ResultState {
 }
 
 export class Result<T, E>{
-    res: T | E;
-    kind: ResultState;
+    private value: T | E;
+    private kind: ResultState;
 
     private constructor(data: T | E, kind: ResultState) {
-        this.res = data;
+        this.value = data;
         this.kind = kind;
     }
 
@@ -18,32 +18,60 @@ export class Result<T, E>{
     public static Err<T, E>(err: E): Result<T, E> {
         return new Result<T, E>(err, ResultState.Err)
     }
+    public is_err(): boolean {
+        return this.kind === ResultState.Err ? 
+            true : false
+    }
+    public is_ok(): boolean {
+        return this.kind === ResultState.Ok ?
+            true : false
+    }
     public map<S>(fn: (ok: T) => S): Result<S, E> {
         switch (this.kind) {
             case ResultState.Ok:
-                const data = this.res as T
-                return Result.Ok(fn(data))
+                return Result.Ok(fn(this.value as T))
             case ResultState.Err:
-                let err = this.res as E
-                return Result.Err(err)
+                return Result.Err(this.value as E)
         }
     }
     public map_err<F>(fn: (err: E) => F): Result<T, F> {
         switch (this.kind) {
             case ResultState.Err:
-                const err = this.res as E
-                return Result.Err(fn(err))
+                return Result.Err(fn(this.value as E))
             case ResultState.Ok:
-                let data = this.res as T
-                return Result.Ok(data)
+                return Result.Ok(this.value as T)
         }
     }
     public to_promise(): Promise<T> {
         switch (this.kind) {
             case ResultState.Ok:
-                return Promise.resolve(this.res as T)
+                return Promise.resolve(this.value as T)
             case ResultState.Err:
-                return Promise.reject(this.res as E)
+                return Promise.reject(this.value as E)
+        }
+    }
+    public attempt(fn: () => T): Result<T, E> {
+        try {
+            return Result.Ok(fn())
+        } catch (e) {
+            return Result.Err(e)
+        }
+    }
+    public unwrap(): T {
+        switch (this.kind) {
+            case ResultState.Ok:
+                return this.value as T
+            case ResultState.Err:
+                throw Error("tried to unwrap an Err Result")
+        }
+    }
+
+    public unwrap_err(): E {
+        switch (this.kind) {
+            case ResultState.Err:
+                return this.value as E
+            case ResultState.Ok:
+                throw Error("tried to unwrap_err an Ok Result")
         }
     }
 }
