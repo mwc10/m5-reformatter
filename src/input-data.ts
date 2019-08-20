@@ -24,7 +24,7 @@ const EXT_REG = /\.[\w\d]+$/
 /** Handle user selecting files for upload */
 export function filepickerCB(e: Event, state: State) {
     e.preventDefault()
-    state.hide_parameters()
+    state.reset()
 
     const filelist: FileList = (e.target as HTMLInputElement).files
     const files: File[] = Array.prototype.slice.call(filelist)

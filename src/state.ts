@@ -1,5 +1,5 @@
 import {M5Data} from './input-data'
-import {Log, FileTable, Parameters} from './dom'
+import {Log, FileTable, Parameters, Download} from './dom'
 import {Option, Some, None, Result} from './fp'
 
 export const DOMIds = {
@@ -15,13 +15,15 @@ export const DOMIds = {
         TARGET: 'target',
         METHOD: 'method',
         UNIT: 'unit',
-    }
+    },
+    DL_BTN: 'downloadBtn',
 }
 
 interface DOMState {
     fileTable?: FileTable,
     log: Log,
     parameters?: Parameters,
+    download?: Download,
 }
 
 interface Settings {
@@ -72,8 +74,7 @@ export class State {
             } else {
                 this.dom.log.err(`Entered day value "${raw}" for file "${file}" could not be parsed`)
             }
-            console.log(this)
-            // call a "check to show download button" callback?
+            this.show_download()
         },
         update_settings: (e: Event) => {
             e.preventDefault()
@@ -83,8 +84,12 @@ export class State {
             this.settings.method = get_val(form, DOMIds.SETTINGS.METHOD)
             this.settings.unit = get_val(form, DOMIds.SETTINGS.UNIT)
 
-            console.log(this)
-        }
+            this.show_download()
+        },
+        download_data: (e: Event) => {
+            console.log("Download!")
+            console.log(e)
+        },
     }
 
     constructor(dom: DOMState) {
@@ -121,6 +126,37 @@ export class State {
             }
 
             this.data.set(filedata.filename, data)
+        }
+    }
+    private should_show_download(this: State): boolean {
+        const check_data_days = (ok: boolean, [, data]: [string, Data]) =>
+            ok && data.day.is_some()
+
+        return  this.settings.target.is_some() &&
+                this.settings.method.is_some() &&
+                this.settings.unit.is_some() &&
+                [...this.data].reduce(check_data_days, true)
+    }
+    add_download_button(this: State, elem: HTMLElement) {
+        this.dom.download = new Download(elem, this.cb.download_data)
+
+        this.show_download()
+    }
+    show_download(this: State){
+        if (this.should_show_download()) { 
+            this.dom.download.show()
+        } else {
+            this.dom.download.hide()
+        }
+    }
+    reset(this: State) {
+        this.dom.fileTable = undefined
+        this.data.clear()
+        this.hide_parameters()
+        try {
+            this.dom.download.hide()
+        } catch (e) {
+            console.error(e)
         }
     }
 }

@@ -32,7 +32,7 @@ export class FileTable {
             const dayCell = document.createElement('td')
             const dayPicker = document.createElement('input')
             dayPicker.type = "number"
-            dayPicker.addEventListener("change", e => state.cb.update_day(e, file.name))
+            dayPicker.addEventListener("input", e => state.cb.update_day(e, file.name))
 
             dayCell.appendChild(dayPicker)
             row.appendChild(dayCell)
@@ -123,7 +123,7 @@ export class Parameters {
         const form = document.createElement('form')
         form.id = D.SETTINGS_FORM_ID
         form.addEventListener('submit', state.cb.update_settings)
-        form.addEventListener('change', state.cb.update_settings)
+        form.addEventListener('input', state.cb.update_settings)
 
         const settings = [
             [D.SETTINGS.TARGET, 'Target/Analyte:'],
@@ -159,4 +159,25 @@ const make_input = (n: string, l: string) => {
     input.id = n
 
     return [label, input]
+}
+
+export class Download {
+    private elem: HTMLButtonElement
+
+    constructor(parent: HTMLElement, cb: (e: Event) => void) {
+        const btn = document.createElement('button')
+        btn.id = D.DL_BTN
+        btn.textContent = "Download Formated Data"
+        btn.addEventListener('click', cb)
+
+        this.elem = btn
+        parent.appendChild(btn)
+    }
+    show() {
+        this.elem.classList.remove(D.HIDDEN_CLASS)
+    }
+
+    hide() {
+        this.elem.classList.add(D.HIDDEN_CLASS)
+    }
 }

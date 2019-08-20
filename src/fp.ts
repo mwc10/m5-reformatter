@@ -107,7 +107,7 @@ export class Option<T> {
             Option.Some(val)
     }
     is_some(this: Option<T>): boolean {
-        return !this.value === undefined
+        return !(this.value === undefined)
     }
     map<S>(fn: (v: T) => S): Option<S> {
         return this.is_some() ? 
