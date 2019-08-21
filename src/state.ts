@@ -4,6 +4,8 @@ import {Option, Some, None, Result} from './fp'
 import {generate_output} from './output'
 
 export const DOMIds = {
+    JS_WARNING_ID: "jsWarning",
+    UPLOAD_DIV_ID: "upload",
     FILE_TABLE_ID: "fileTable",
     FILE_TABLE_DIV: "fileList",
     LOG_ID: "log",
@@ -151,6 +153,7 @@ export class State {
                 ))))
     }
     reset(this: State) {
+        this.dom.log.clear()
         this.dom.fileTable = undefined
         this.data.clear()
         this.hide_parameters()

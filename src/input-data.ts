@@ -28,8 +28,6 @@ export function filepickerCB(e: Event, state: State) {
 
     const filelist: FileList = (e.target as HTMLInputElement).files
     const files: File[] = Array.prototype.slice.call(filelist)
-    const logger = state.dom.log
-    logger.clear()
 
     // make a list of each file to be uploaded and processed
     const table = new FileTable(files, state)

@@ -1,6 +1,29 @@
 import {State, DOMIds as D} from './state'
+import { filepickerCB } from './input-data';
 
 export const html_clear = (e: HTMLElement) => e.innerHTML = ""
+
+export class Uploader {
+    private static readonly container = document.getElementById(D.UPLOAD_DIV_ID)
+
+    constructor(state: State) {
+        const header = document.createElement('h2')
+        header.textContent = "Upload Data"
+        
+        const help = document.createElement('p')
+        help.classList.add("help")
+        help.textContent = "Drag an number of M5 text files onto this page to start reformatting your data"
+
+        const uploader = document.createElement('input')
+        uploader.type = 'file'
+        uploader.multiple = true
+        uploader.addEventListener("change", e => filepickerCB(e, state))
+
+        Uploader.container.appendChild(header)
+        Uploader.container.appendChild(help)
+        Uploader.container.appendChild(uploader)
+    }
+}
 
 export class FileTable {
     private readonly container = document.getElementById(D.FILE_TABLE_DIV);
@@ -107,6 +130,7 @@ export class Parameters {
         header.textContent = "Enter Assay Parameters"
 
         const help = document.createElement('p')
+        help.classList.add("help")
         help.textContent = "Add an assay read date to each file above." + 
         " Then, set the Target, Method, and Units in the forms below." + 
         " Once all settings are entered, you will be able to download a CSV for upload into the MPS."
