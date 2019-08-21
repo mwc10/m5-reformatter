@@ -1,6 +1,7 @@
 import {M5Data} from './input-data'
 import {Log, FileTable, Parameters, Download} from './dom'
 import {Option, Some, None, Result} from './fp'
+import {generate_output} from './output'
 
 export const DOMIds = {
     FILE_TABLE_ID: "fileTable",
@@ -15,6 +16,7 @@ export const DOMIds = {
         TARGET: 'target',
         METHOD: 'method',
         UNIT: 'unit',
+        LOC: 'location',
     },
     DL_BTN: 'downloadBtn',
 }
@@ -30,6 +32,7 @@ interface Settings {
     target: Option<string>,
     method: Option<string>,
     unit: Option<string>,
+    location: Option<string>,
 }
 
 interface Data {
@@ -40,20 +43,7 @@ interface Data {
     }
 }
 
-function get_form_input(form: HTMLFormElement, name: string): HTMLInputElement {
-    return form.elements.namedItem(name) as HTMLInputElement
-}
-
-function ignore_empty_str(s: string): Option<string> {
-    return s === "" || s === null || s === undefined ? 
-        None() : 
-        Some(s)
-}
-
-const get_val = (f: HTMLFormElement, v: string) => ignore_empty_str(get_form_input(f, v).value)
-
 export class State {
-    //files: Map<string, M5Data>
     dom: DOMState
     settings: Settings
     // filename -> Data
@@ -67,12 +57,11 @@ export class State {
                 Result.attempt(() => {
                     this.data.get(file).day = Some(day)
                 })
-                .map_err(e => {
-                    console.error("error updating number in file state", e)
-                    this.dom.log.err(`${e}`)
+                .map_err((e: Error) => {
+                    this.log_err(e, "error updating number in file state")
                 })
             } else {
-                this.dom.log.err(`Entered day value "${raw}" for file "${file}" could not be parsed`)
+                this.log_err(`Entered day value "${raw}" for file "${file}" could not be parsed`)
             }
             this.show_download()
         },
@@ -83,12 +72,12 @@ export class State {
             this.settings.target = get_val(form, DOMIds.SETTINGS.TARGET)
             this.settings.method = get_val(form, DOMIds.SETTINGS.METHOD)
             this.settings.unit = get_val(form, DOMIds.SETTINGS.UNIT)
+            this.settings.location = get_val(form, DOMIds.SETTINGS.LOC)
 
             this.show_download()
         },
         download_data: (e: Event) => {
-            console.log("Download!")
-            console.log(e)
+            generate_output(this)
         },
     }
 
@@ -99,6 +88,7 @@ export class State {
             target: None(),
             method: None(),
             unit: None(),
+            location: None(),
         }
     }
 
@@ -135,6 +125,7 @@ export class State {
         return  this.settings.target.is_some() &&
                 this.settings.method.is_some() &&
                 this.settings.unit.is_some() &&
+                this.settings.location.is_some() &&
                 [...this.data].reduce(check_data_days, true)
     }
     add_download_button(this: State, elem: HTMLElement) {
@@ -149,6 +140,16 @@ export class State {
             this.dom.download.hide()
         }
     }
+    /** Get MIFC settings as an object, if all settings are present  */
+    get_settings(this: State) {
+        const s = this.settings
+        return  s.target.and_then(target => 
+                s.method.and_then(method => 
+                s.unit.and_then(unit => 
+                s.location.map(location => 
+                    ({ target, method, unit, location })
+                ))))
+    }
     reset(this: State) {
         this.dom.fileTable = undefined
         this.data.clear()
@@ -156,7 +157,29 @@ export class State {
         try {
             this.dom.download.hide()
         } catch (e) {
-            console.error(e)
+            this.log_err(e)
+        }
+    }
+    /** Write an Error or string to the DOM log */
+    log_err(this: State, err: Error | string, context?: string) {
+        if (typeof err === 'string') {
+            this.dom.log.err(err)
+        } else {
+            if (context) { console.error(context) }
+            console.error(err)
+            this.dom.log.err(err.message + " [check console for trace]")
         }
     }
 }
+
+function get_form_input(form: HTMLFormElement, name: string): HTMLInputElement {
+    return form.elements.namedItem(name) as HTMLInputElement
+}
+
+function ignore_empty_str(s: string): Option<string> {
+    return s === "" || s === null || s === undefined ? 
+        None() : 
+        Some(s)
+}
+
+const get_val = (f: HTMLFormElement, v: string) => ignore_empty_str(get_form_input(f, v).value)

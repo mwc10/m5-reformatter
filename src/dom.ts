@@ -129,6 +129,7 @@ export class Parameters {
             [D.SETTINGS.TARGET, 'Target/Analyte:'],
             [D.SETTINGS.METHOD, 'Method/Kit:'],
             [D.SETTINGS.UNIT, 'Unit of Data:'],
+            [D.SETTINGS.LOC, 'Sample Location:'],
         ]
 
         for (const [t, l] of settings) {

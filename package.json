@@ -15,5 +15,7 @@
     "typescript": "^3.5.3",
     "watchify": "^3.11.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "xlsx": "^0.15.1"
+  }
 }

@@ -35,13 +35,12 @@ export function filepickerCB(e: Event, state: State) {
     const table = new FileTable(files, state)
     const update_status = (res: ParseResult<M5Data>[]) => {
         const [oks, errs] = partition_results(res)
-        return update_file_status(oks, errs, logger, table)
+        return update_file_status(oks, errs, state, table)
     }
     const update_state_finish = (data: M5Data[]) => {
         if (data.length > 0) {
             state.update_files(data)
             state.show_parameters()
-            console.log(state)
         } else {
             throw Error("No valid M5 data files. Pick new files")
         }
@@ -57,7 +56,7 @@ export function filepickerCB(e: Event, state: State) {
         .then(update_status)
         .then(([oks, _]) => oks)
         .then(update_state_finish)
-        .catch(e => logger.err(e))
+        .catch(state.log_err.bind(state))
 }
 
 function partition_results(results: ParseResult<M5Data>[]): [M5Data[], ParseErr[]] {
@@ -68,10 +67,10 @@ function partition_results(results: ParseResult<M5Data>[]): [M5Data[], ParseErr[
     }, [[],[]] as [M5Data[], ParseErr[]])
 }
 
-function update_file_status(oks: M5Data[], errs: ParseErr[], log:Log, table: FileTable): [M5Data[], ParseErr[]] {
+function update_file_status(oks: M5Data[], errs: ParseErr[], state: State, table: FileTable): [M5Data[], ParseErr[]] {
     for (const err of errs) {
         table.update_error(err.filename, err.mesg)
-        log.err(err.mesg)
+        state.log_err(err.mesg)
     }
 
     for (const ok of oks) {
