@@ -22,13 +22,9 @@ type ParsePromise<T> = Promise<ParseResult<T>>
 const EXT_REG = /\.[\w\d]+$/
 
 /** Handle user selecting files for upload */
-export function filepickerCB(e: Event, state: State) {
-    e.preventDefault()
+export function process_files(files: File[], state: State) {
     state.reset()
-
-    const filelist: FileList = (e.target as HTMLInputElement).files
-    const files: File[] = Array.prototype.slice.call(filelist)
-
+    
     // make a list of each file to be uploaded and processed
     const table = new FileTable(files, state)
     const update_status = (res: ParseResult<M5Data>[]) => {

@@ -1,4 +1,4 @@
-import {M5Data} from './input-data'
+import {M5Data, process_files} from './input-data'
 import {Log, FileTable, Parameters, Download} from './dom'
 import {Option, Some, None, Result} from './fp'
 import {generate_output} from './output'
@@ -6,6 +6,7 @@ import {generate_output} from './output'
 export const DOMIds = {
     JS_WARNING_ID: "jsWarning",
     UPLOAD_DIV_ID: "upload",
+    FILE_INPUT_ID: "fileInputPicker",
     FILE_TABLE_ID: "fileTable",
     FILE_TABLE_DIV: "fileList",
     LOG_ID: "log",
@@ -52,6 +53,29 @@ export class State {
     data: Map<string, Data>
 
     readonly cb = {
+        dragover_enter: (e: DragEvent) => {
+            e.stopPropagation()
+            e.preventDefault()
+        },
+        dragdrop: (e: DragEvent) => {
+            e.stopPropagation()
+            e.preventDefault()
+
+            const picker = document.getElementById(DOMIds.FILE_INPUT_ID) as HTMLInputElement
+            picker.value = ""
+
+            const dt = e.dataTransfer
+            const files = Array.prototype.slice.call(dt.files)
+            process_files(files, this)
+        },
+        filepicker: (e: Event) => {
+            e.preventDefault()
+
+            const filelist: FileList = (e.target as HTMLInputElement).files
+            const files: File[] = Array.prototype.slice.call(filelist)
+
+            process_files(files, this)
+        },
         update_day: (e: Event, file: string) => {
             Result.attempt(() => {
                 const raw = (e.target as HTMLInputElement).value

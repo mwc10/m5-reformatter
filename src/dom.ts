@@ -1,5 +1,4 @@
 import {State, DOMIds as D} from './state'
-import { filepickerCB } from './input-data';
 
 export const html_clear = (e: HTMLElement) => e.innerHTML = ""
 
@@ -18,7 +17,8 @@ export class Uploader {
         const uploader = document.createElement('input')
         uploader.type = 'file'
         uploader.multiple = true
-        uploader.addEventListener("change", e => filepickerCB(e, state))
+        uploader.id = D.FILE_INPUT_ID
+        uploader.addEventListener("change", state.cb.filepicker)
 
         Uploader.container.appendChild(header)
         Uploader.container.appendChild(help)
