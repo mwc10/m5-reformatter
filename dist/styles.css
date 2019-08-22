@@ -10,12 +10,27 @@ body {
     display: none !important;
 }
 
+a {
+    color: darkcyan;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a:visited {
+    color: darkcyan;
+}
+
 h1 {
     text-shadow: 2px 1px #cccccc;
+    margin: 0.5rem 0;
 }
 
 h2 {
     text-shadow: 2px 2px #dddddd;
+    margin: 0.4rem 0;
 }
 
 #log {

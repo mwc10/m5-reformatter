@@ -11,7 +11,7 @@ export class Uploader {
         
         const help = document.createElement('p')
         help.classList.add("help")
-        help.textContent = "Drag an number of M5 text files onto this page to start reformatting your data." +
+        help.textContent = "Drag any number of M5 text files onto this page to start reformatting your data." +
         " Or, use the button below to select your files"
 
         const uploader = document.createElement('input')
