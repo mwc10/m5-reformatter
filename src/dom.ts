@@ -12,7 +12,8 @@ export class Uploader {
         
         const help = document.createElement('p')
         help.classList.add("help")
-        help.textContent = "Drag an number of M5 text files onto this page to start reformatting your data"
+        help.textContent = "Drag an number of M5 text files onto this page to start reformatting your data." +
+        " Or, use the button below to select your files"
 
         const uploader = document.createElement('input')
         uploader.type = 'file'
@@ -44,10 +45,15 @@ export class FileTable {
         const table = document.createElement("table")
         table.id = D.FILE_TABLE_ID
 
+        const thead = document.createElement('thead')
         const header = document.createElement('tr')
-        header.innerHTML = "<th> File </th> <th> Status </th> <th> Day </th>"
-        table.appendChild(header)
+        header.innerHTML = '<th scope="col"> File </th>' +
+                           '<th scope="col"> Status </th>' + 
+                           '<th scope="col"> Day </th>'
+        thead.appendChild(header)
+        table.appendChild(thead)
 
+        const tbody = document.createElement('tbody')
         for (const file of files) {
             const row = document.createElement('tr')
             row.innerHTML = `<td>${file.name}</td> <td> Loading </td>`
@@ -55,14 +61,16 @@ export class FileTable {
             const dayCell = document.createElement('td')
             const dayPicker = document.createElement('input')
             dayPicker.type = "number"
+            dayPicker.placeholder = "Enter Day for this plate"
             dayPicker.addEventListener("input", e => state.cb.update_day(e, file.name))
 
             dayCell.appendChild(dayPicker)
             row.appendChild(dayCell)
-            table.appendChild(row)
+            tbody.appendChild(row)
             map.set(file.name, row)
         }
 
+        table.appendChild(tbody)
         return [table, map]
     }
 
@@ -74,6 +82,7 @@ export class FileTable {
             case FileStatus.Error:
                 statusCell.textContent = "Error!"
                 statusCell.classList.add(D.ERR_CLASS)
+                statusCell.parentElement.classList.add(D.ERR_CLASS)
                 row.querySelector("td:nth-child(3)").classList.add(D.HIDDEN_CLASS)
                 break;
             case FileStatus.Success:
@@ -150,16 +159,17 @@ export class Parameters {
         form.addEventListener('input', state.cb.update_settings)
 
         const settings = [
-            [D.SETTINGS.TARGET, 'Target/Analyte:'],
-            [D.SETTINGS.METHOD, 'Method/Kit:'],
-            [D.SETTINGS.UNIT, 'Unit of Data:'],
-            [D.SETTINGS.LOC, 'Sample Location:'],
+            [D.SETTINGS.TARGET, 'Target/Analyte', "targets"],
+            [D.SETTINGS.METHOD, 'Method/Kit', 'methods'],
+            [D.SETTINGS.UNIT, 'Data Unit', 'units'],
+            [D.SETTINGS.LOC, 'Sample Location', 'locations'],
         ]
 
-        for (const [t, l] of settings) {
-            const [label, input] = make_input(t, l)
+        for (const [t, l, u] of settings) {
+            const [label, input, link] = make_input(t, l, u)
             form.appendChild(label)
             form.appendChild(input)
+            form.appendChild(link)
         }
 
         return form
@@ -174,16 +184,23 @@ export class Parameters {
     }
 }
 
-const make_input = (n: string, l: string) => {
+const BASE_URL = 'https://mps.csb.pitt.edu/assays/'
+
+const make_input = (n: string, l: string, url: string) => {
     const label = document.createElement('label')
     label.htmlFor = n
-    label.textContent = l
+    label.textContent = l + ":"
     const input = document.createElement('input')
     input.type = "text"
     input.name = n
     input.id = n
+    input.placeholder = l
+    const link = document.createElement('span')
+    link.id = n + "Link"
+    link.classList.add("vocab-link")
+    link.innerHTML = `<a href="${BASE_URL}${url}" target="_blank" rel="noopener noreferrer">List of all ${l}s</a>`
 
-    return [label, input]
+    return [label, input, link]
 }
 
 export class Download {

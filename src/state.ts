@@ -53,18 +53,21 @@ export class State {
 
     readonly cb = {
         update_day: (e: Event, file: string) => {
-            const raw = (e.target as HTMLInputElement).value
-            const day = Number.parseFloat(raw)
-            if (Number.isFinite(day)) {
-                Result.attempt(() => {
-                    this.data.get(file).day = Some(day)
-                })
-                .map_err((e: Error) => {
-                    this.log_err(e, "error updating number in file state")
-                })
-            } else {
-                this.log_err(`Entered day value "${raw}" for file "${file}" could not be parsed`)
-            }
+            Result.attempt(() => {
+                const raw = (e.target as HTMLInputElement).value
+                const empty = raw === ''
+                const day = Number.parseFloat(raw)
+
+                if (!empty && !Number.isFinite(day)) {
+                    throw `Entered day value "${raw}" for file "${file}" could not be parsed`
+                }
+                
+                this.data.get(file).day = empty ? None() : Some(day)
+            })
+            .map_err((e: Error) =>
+                this.log_err(e, "error updating day value in file state")
+            )
+
             this.show_download()
         },
         update_settings: (e: Event) => {

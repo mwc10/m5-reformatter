@@ -49,11 +49,19 @@ function create_workbook(s: State, wbName: string): Result<XLSX.WorkBook, Error>
     const settings = mbSettings.unwrap()
     const ws = XLSX.utils.aoa_to_sheet([MIFC_HEADER])
 
-    for (const [origin, plate] of s.data) {
-        const day = plate.day.unwrap()
-        for (const [well, value] of plate.data.wells) {
-            const row = fmt_mifc_row(value, day, well, origin, settings)
-            XLSX.utils.sheet_add_json(ws, [row], {header: MIFC_HEADER, skipHeader: true, origin: -1})
+    for (const [fileName, plateData] of s.data) {
+        if (!plateData.day.is_some()) {
+            return Err(Error(`Day for plate "${fileName}" is missing`))
+        }
+
+        const day = plateData.day.unwrap()
+        for (const [well, value] of plateData.data.wells) {
+            const row = fmt_mifc_row(value, day, well, fileName, settings)
+            XLSX.utils.sheet_add_json(
+                ws, 
+                [row], 
+                {header: MIFC_HEADER, skipHeader: true, origin: -1}
+            )
         }
     }
 
