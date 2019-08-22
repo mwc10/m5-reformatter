@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "browserify src/main.ts -p [tsify] -o dist/bundle.js",
-    "watch": "watchify src/main.ts -v -p [tsify] -o dist/bundle.js"
+    "watch": "watchify src/main.ts -v -p [tsify] -o dist/bundle.js",
+    "clean": "rm dist/bundle.js"
   },
   "author": "",
   "license": "ISC",
