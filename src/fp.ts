@@ -1,4 +1,4 @@
-enum ResultState {
+const enum ResultState {
     Ok,
     Err
 }
@@ -125,6 +125,11 @@ export class Option<T> {
         } else {
             throw Error("called unwrap on an empty Option")
         }
+    }
+    unwrap_or_else(fn: () => T): T {
+        return this.is_some() ?
+            this.value as T : 
+            fn()
     }
 }
 

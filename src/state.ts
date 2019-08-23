@@ -15,12 +15,14 @@ export const DOMIds = {
     ERR_CLASS: "error",
     SUCCESS_CLASS: "success",
     HIDDEN_CLASS: "hidden",
+    LOADING_CLASS: "loading",
     SETTINGS: {
         TARGET: 'target',
         METHOD: 'method',
         UNIT: 'unit',
         LOC: 'location',
     },
+    DL_DIV: 'download',
     DL_BTN: 'downloadBtn',
 }
 
@@ -51,6 +53,7 @@ export class State {
     settings: Settings
     // filename -> Data
     data: Map<string, Data>
+    output: Option<string>
 
     readonly cb = {
         dragover_enter: (e: DragEvent) => {
@@ -105,6 +108,10 @@ export class State {
 
             this.show_download()
         },
+        update_output_name: (e: Event) => {
+            const input = e.target as HTMLInputElement
+            this.output = Option.attempt(() => input.value === "" ? null : input.value)
+        },
         download_data: (e: Event) => {
             generate_output(this)
         },
@@ -119,6 +126,7 @@ export class State {
             unit: None(),
             location: None(),
         }
+        this.output = None()
     }
 
     set_table(t: FileTable) {
@@ -158,7 +166,7 @@ export class State {
                 [...this.data].reduce(check_data_days, true)
     }
     add_download_button(this: State, elem: HTMLElement) {
-        this.dom.download = new Download(elem, this.cb.download_data)
+        this.dom.download = new Download(elem, this.cb.download_data, this.cb.update_output_name)
 
         this.show_download()
     }

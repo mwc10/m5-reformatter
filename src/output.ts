@@ -10,7 +10,7 @@ interface MIFCSettings {
 }
 
 export function generate_output(state: State) {
-    const output = "mifc-data-test.xlsx"
+    const output = check_xlsx(state.output.unwrap_or_else(default_output_name))
     const res = create_workbook(state, output)
     if (res.is_err()) {
         state.log_err(res.unwrap_err())
@@ -18,7 +18,35 @@ export function generate_output(state: State) {
     }
 
     const wb = res.unwrap()
-    XLSX.writeFile(wb, output)
+    Result.attempt(() => XLSX.writeFile(wb, output))
+        .map_err(state.log_err.bind(state))
+}
+
+export function default_output_name(): string {
+    const now = new Date()
+
+    return `${now.getFullYear()}-${now.getMonth()}-${now.getDay()}-formated-data.xlsx`
+}
+
+function check_xlsx(f: string): string {
+    return f.endsWith('.xlsx') ? 
+        f : 
+        f + '.xlsx'
+}
+
+/** Apparently, the excel library can't output more than files with more than 31 characters */
+function clamp_str(f: string, size: number): string {
+    return f.length > size ?
+        f.substring(0, 31) :
+        f
+}
+
+/** Remove the extension of a filename */
+function get_filename(f: string): string {
+    const finalDot = f.lastIndexOf('.')
+    return finalDot !== -1 ? 
+        f.substring(0, finalDot) :
+        f 
 }
 
 const MIFC_HEADER = [
@@ -66,7 +94,8 @@ function create_workbook(s: State, wbName: string): Result<XLSX.WorkBook, Error>
     }
 
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, wbName)
+    const sheetName = clamp_str(get_filename(wbName), 31)
+    XLSX.utils.book_append_sheet(wb, ws, sheetName)
 
     return Ok(wb)
 }

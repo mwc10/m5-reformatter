@@ -1,4 +1,5 @@
 import {State, DOMIds as D} from './state'
+import { default_output_name } from './output'
 
 export const html_clear = (e: HTMLElement) => e.innerHTML = ""
 
@@ -56,7 +57,11 @@ export class FileTable {
         const tbody = document.createElement('tbody')
         for (const file of files) {
             const row = document.createElement('tr')
-            row.innerHTML = `<td>${file.name}</td> <td> Loading </td>`
+            row.innerHTML = `<td>${file.name}</td>`
+
+            const statusCell = document.createElement('td')
+            statusCell.innerHTML = "<span> Loading </span>"
+            statusCell.classList.add(D.LOADING_CLASS)
 
             const dayCell = document.createElement('td')
             const dayPicker = document.createElement('input')
@@ -65,6 +70,7 @@ export class FileTable {
             dayPicker.addEventListener("input", e => state.cb.update_day(e, file.name))
 
             dayCell.appendChild(dayPicker)
+            row.appendChild(statusCell)
             row.appendChild(dayCell)
             tbody.appendChild(row)
             map.set(file.name, row)
@@ -90,7 +96,8 @@ export class FileTable {
                 statusCell.classList.add(D.SUCCESS_CLASS)
                 break;
             case FileStatus.Loading:
-                statusCell.textContent = "Loading"
+                statusCell.innerHTML = "<span> Loading </span>"
+                statusCell.classList.add(D.LOADING_CLASS)
                 break;
         }
     }
@@ -104,7 +111,7 @@ export class FileTable {
     }
 }
 
-enum FileStatus {
+const enum FileStatus {
     Loading,
     Success,
     Error
@@ -204,16 +211,26 @@ const make_input = (n: string, l: string, url: string) => {
 }
 
 export class Download {
-    private elem: HTMLButtonElement
+    private elem: HTMLDivElement
 
-    constructor(parent: HTMLElement, cb: (e: Event) => void) {
+    constructor(parent: HTMLElement, cb: (e: Event) => void, namecb: (e: Event) => void) {
+        const div = document.createElement('div')
+        div.id = D.DL_DIV
+
         const btn = document.createElement('button')
         btn.id = D.DL_BTN
         btn.textContent = "Download Formated Data"
         btn.addEventListener('click', cb)
 
-        this.elem = btn
-        parent.appendChild(btn)
+        const filename = document.createElement('input')
+        filename.type = 'text'
+        filename.placeholder = default_output_name()
+        filename.addEventListener('input', namecb)
+
+        div.appendChild(btn)
+        div.appendChild(filename)
+        this.elem = div
+        parent.appendChild(div)
     }
     show() {
         this.elem.classList.remove(D.HIDDEN_CLASS)
