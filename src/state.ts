@@ -27,7 +27,7 @@ export const DOMIds = {
 }
 
 interface DOMState {
-    fileTable?: FileTable,
+    fileTable: Option<FileTable>,
     log: Log,
     parameters?: Parameters,
     download?: Download,
@@ -69,15 +69,15 @@ export class State {
 
             const dt = e.dataTransfer
             const files = Array.prototype.slice.call(dt.files)
-            process_files(files, this)
+            process_files(files, this, "replace")
         },
-        filepicker: (e: Event) => {
+        add_files: (e: Event) => {
             e.preventDefault()
 
             const filelist: FileList = (e.target as HTMLInputElement).files
             const files: File[] = Array.prototype.slice.call(filelist)
 
-            process_files(files, this)
+            process_files(files, this, "add")
         },
         update_day: (e: Event, file: string) => {
             Result.attempt(() => {
@@ -130,7 +130,7 @@ export class State {
     }
 
     set_table(t: FileTable) {
-        this.dom.fileTable = t
+        this.dom.fileTable = Some(t)
     }
     hide_parameters() {
         this.dom.parameters.hide()
@@ -141,8 +141,10 @@ export class State {
     update_parameters(params: Parameters) {
         this.dom.parameters = params
     }
+    filter_new_files(files: File[]): File[] {
+        return files.filter(f => !this.data.has(f.name))
+    }
     update_files(arr: M5Data[]) {
-        this.data.clear()
         for (const filedata of arr) {
             const data: Data = {
                 day: None(),
@@ -189,7 +191,7 @@ export class State {
     }
     reset(this: State) {
         this.dom.log.clear()
-        this.dom.fileTable = undefined
+        this.dom.fileTable = None()
         this.data.clear()
         this.hide_parameters()
         try {

@@ -1,8 +1,9 @@
 import {Log, Parameters, Uploader} from './dom'
 import {State, DOMIds} from './state'
+import { None } from './fp'
 
 const log = new Log()
-const state = new State({log})
+const state = new State({log, fileTable: None()})
 const parameters = new Parameters(state)
 state.update_parameters(parameters)
 state.add_download_button(document.body)

@@ -26,12 +26,10 @@ export class Result<T, E>{
         }
     }
     is_err(): boolean {
-        return this.kind === ResultState.Err ? 
-            true : false
+        return this.kind === ResultState.Err
     }
     is_ok(): boolean {
-        return this.kind === ResultState.Ok ?
-            true : false
+        return this.kind === ResultState.Ok
     }
     map<S>(fn: (ok: T) => S): Result<S, E> {
         switch (this.kind) {
@@ -108,6 +106,9 @@ export class Option<T> {
     }
     is_some(this: Option<T>): boolean {
         return !(this.value === undefined)
+    }
+    is_none(this: Option<T>): boolean {
+        return this.value === undefined
     }
     map<S>(fn: (v: T) => S): Option<S> {
         return this.is_some() ? 

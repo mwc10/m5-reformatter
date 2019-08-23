@@ -18,12 +18,19 @@ export class Uploader {
         const uploader = document.createElement('input')
         uploader.type = 'file'
         uploader.multiple = true
+        uploader.accept = '.txt'
         uploader.id = D.FILE_INPUT_ID
-        uploader.addEventListener("change", state.cb.filepicker)
+        uploader.addEventListener("change", state.cb.add_files)
+        uploader.classList.add('visually-hidden')
+
+        const uploadLabel = document.createElement('label')
+        uploadLabel.htmlFor = D.FILE_INPUT_ID
+        uploadLabel.textContent = "Add Files"
 
         Uploader.container.appendChild(header)
         Uploader.container.appendChild(help)
         Uploader.container.appendChild(uploader)
+        Uploader.container.appendChild(uploadLabel)
     }
 }
 
@@ -56,28 +63,34 @@ export class FileTable {
 
         const tbody = document.createElement('tbody')
         for (const file of files) {
-            const row = document.createElement('tr')
-            row.innerHTML = `<td>${file.name}</td>`
-
-            const statusCell = document.createElement('td')
-            statusCell.innerHTML = "<span> Loading </span>"
-            statusCell.classList.add(D.LOADING_CLASS)
-
-            const dayCell = document.createElement('td')
-            const dayPicker = document.createElement('input')
-            dayPicker.type = "number"
-            dayPicker.placeholder = "Enter Day for this plate"
-            dayPicker.addEventListener("input", e => state.cb.update_day(e, file.name))
-
-            dayCell.appendChild(dayPicker)
-            row.appendChild(statusCell)
-            row.appendChild(dayCell)
+            const row = FileTable.make_file_row(file.name, state)
             tbody.appendChild(row)
             map.set(file.name, row)
         }
 
         table.appendChild(tbody)
         return [table, map]
+    }
+
+    private static make_file_row(fileName: string, state: State): HTMLTableRowElement {
+        const row = document.createElement('tr')
+        row.innerHTML = `<td>${fileName}</td>`
+
+        const statusCell = document.createElement('td')
+        statusCell.innerHTML = "<span> Loading </span>"
+        statusCell.classList.add(D.LOADING_CLASS)
+
+        const dayCell = document.createElement('td')
+        const dayPicker = document.createElement('input')
+        dayPicker.type = "number"
+        dayPicker.placeholder = "Enter Day for this plate"
+        dayPicker.addEventListener("input", e => state.cb.update_day(e, fileName))
+
+        dayCell.appendChild(dayPicker)
+        row.appendChild(statusCell)
+        row.appendChild(dayCell)
+
+        return row
     }
 
     private update_file_status(file: string, status: FileStatus, mesg?: string) {
@@ -87,12 +100,14 @@ export class FileTable {
         switch (status) {
             case FileStatus.Error:
                 statusCell.textContent = "Error!"
+                statusCell.classList.remove(D.LOADING_CLASS)
                 statusCell.classList.add(D.ERR_CLASS)
                 statusCell.parentElement.classList.add(D.ERR_CLASS)
                 row.querySelector("td:nth-child(3)").classList.add(D.HIDDEN_CLASS)
                 break;
             case FileStatus.Success:
                 statusCell.textContent = "Ready"
+                statusCell.classList.remove(D.LOADING_CLASS)
                 statusCell.classList.add(D.SUCCESS_CLASS)
                 break;
             case FileStatus.Loading:
@@ -108,6 +123,21 @@ export class FileTable {
 
     update_error(file: string, mesg: string) {
         this.update_file_status(file, FileStatus.Error, mesg)
+    }
+    add_new_file_rows(this: FileTable, files: File[], state: State) {
+        const tbody = this.elem.getElementsByTagName('tbody')[0]
+
+        for (const file of files) {
+            const row = FileTable.make_file_row(file.name, state)
+            tbody.appendChild(row)
+            this.fileMap.set(file.name, row)
+        }
+    }
+    remove_error_rows(this: FileTable) {
+        const errRows = this.elem.querySelectorAll(`tr.${D.ERR_CLASS}`)
+        for (const row of errRows) {
+            row.parentElement.removeChild(row)
+        }
     }
 }
 
@@ -173,7 +203,7 @@ export class Parameters {
         ]
 
         for (const [t, l, u] of settings) {
-            const [label, input, link] = make_input(t, l, u)
+            const [label, input, link] = make_setting_input(t, l, u)
             form.appendChild(label)
             form.appendChild(input)
             form.appendChild(link)
@@ -193,7 +223,7 @@ export class Parameters {
 
 const BASE_URL = 'https://mps.csb.pitt.edu/assays/'
 
-const make_input = (n: string, l: string, url: string) => {
+const make_setting_input = (n: string, l: string, url: string) => {
     const label = document.createElement('label')
     label.htmlFor = n
     label.textContent = l + ":"

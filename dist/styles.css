@@ -14,6 +14,21 @@ body {
     display: none !important;
 }
 
+.visually-hidden {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+}
+/* Separate rule for compatibility, :focus-within is required on modern Firefox and Chrome */
+input.visually-hidden:focus + label {
+    outline: thin dotted;
+}
+input.visually-hidden:focus-within + label {
+    outline: thin dotted;
+}
+
 a {
     color: darkcyan;
     text-decoration: none;
@@ -35,6 +50,28 @@ h1 {
 h2 {
     text-shadow: 2px 2px #dddddd;
     margin: 0.4rem 0;
+}
+
+#upload>label {
+    background-color:#4467c7;
+	-moz-border-radius:10px;
+	-webkit-border-radius:10px;
+	border-radius:10px;
+	border:2px solid #111c6e;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-size:1rem;
+	padding:0.16rem 2rem;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #2f2766;
+}
+#upload>label:hover {
+	background-color:#3d43c7;
+}
+#upload>label:active {
+	position:relative;
+	top:1px;
 }
 
 #log {

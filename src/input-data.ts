@@ -22,35 +22,71 @@ type ParsePromise<T> = Promise<ParseResult<T>>
 const EXT_REG = /\.[\w\d]+$/
 
 /** Handle user selecting files for upload */
-export function process_files(files: File[], state: State) {
-    state.reset()
-    
-    // make a list of each file to be uploaded and processed
-    const table = new FileTable(files, state)
+export function process_files(
+    files: File[], 
+    state: State, 
+    action: "add" | "replace"
+) {
+    /** Helper fn to update the status rows of the file table based on 
+     * the result of parsing the File data promise
+     */
     const update_status = (res: ParseResult<M5Data>[]) => {
         const [oks, errs] = partition_results(res)
-        return update_file_status(oks, errs, state, table)
+        return update_file_status(oks, errs, state)
     }
+    /** Helper fn to update the app state to contain the data parsed
+     * from the uploaded files
+     */
     const update_state_finish = (data: M5Data[]) => {
         if (data.length > 0) {
             state.update_files(data)
             state.show_parameters()
         } else {
-            throw Error("No valid M5 data files. Pick new files")
+            if (state.data.size === 0) {
+                throw Error("No valid M5 data files. Select new files")
+            }
         }
     }
-    const promisedFiles = files
+
+    const filesToAdd = action === "replace" || state.dom.fileTable.is_none() ?
+        create_new_filetable(files, state) :
+        add_files_to_table(files, state)
+
+    const promisedFiles = filesToAdd
         .map(f => 
             read_m5_datafile(f)
             .catch(e => Err<M5Data, ParseErr>(new ParseErr(f.name, e)))
         )
 
-    state.set_table(table)
     Promise.all(promisedFiles)
         .then(update_status)
         .then(([oks, _]) => oks)
         .then(update_state_finish)
         .catch(state.log_err.bind(state))
+}
+
+function create_new_filetable(files: File[], state: State): File[] {
+    state.reset()
+    const table = new FileTable(files, state)
+    state.set_table(table)
+
+    return files
+}
+
+function add_files_to_table(files: File[], state: State): File[] {
+    const newFiles = state.filter_new_files(files)
+    const mbTable = state.dom.fileTable
+
+    if (mbTable.is_some()) {
+        const table = mbTable.unwrap()
+        state.dom.log.clear()
+        table.remove_error_rows()
+        table.add_new_file_rows(newFiles, state)
+    } else {
+        create_new_filetable(files, state)
+    }
+    
+    return newFiles
 }
 
 function partition_results(results: ParseResult<M5Data>[]): [M5Data[], ParseErr[]] {
@@ -61,14 +97,16 @@ function partition_results(results: ParseResult<M5Data>[]): [M5Data[], ParseErr[
     }, [[],[]] as [M5Data[], ParseErr[]])
 }
 
-function update_file_status(oks: M5Data[], errs: ParseErr[], state: State, table: FileTable): [M5Data[], ParseErr[]] {
+function update_file_status(oks: M5Data[], errs: ParseErr[], state: State): [M5Data[], ParseErr[]] {
+    const maybeTable = state.dom.fileTable
+    
     for (const err of errs) {
-        table.update_error(err.filename, err.mesg)
+        maybeTable.map(t => t.update_error(err.filename, err.mesg))
         state.log_err(err.mesg)
     }
 
     for (const ok of oks) {
-        table.update_sucess(ok.filename)
+        maybeTable.map(t => t.update_sucess(ok.filename))
     }
 
     return [oks, errs]
