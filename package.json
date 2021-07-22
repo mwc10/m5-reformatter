@@ -17,6 +17,6 @@
     "watchify": "^3.11.1"
   },
   "dependencies": {
-    "xlsx": "^0.15.1"
+    "xlsx": "^0.17.0"
   }
 }
